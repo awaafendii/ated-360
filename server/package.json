@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:deploy": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
     "db:seed": "node prisma/seed.js",
     "db:reset": "prisma migrate reset --force"
