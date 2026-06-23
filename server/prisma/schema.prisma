@@ -1,0 +1,217 @@
+// ============================================================
+// ATED-360 — Schéma de base de données (Prisma + PostgreSQL)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Énumérations ----------
+
+enum Role {
+  PRODUCTEUR
+  PARTENAIRE
+}
+
+enum Zone {
+  CONAKRY
+  KINDIA
+  BOKE
+  MAMOU
+  LABE
+  FARANAH
+  KANKAN
+  NZEREKORE
+}
+
+enum FarmType {
+  AVICOLE
+  AGRICOLE
+  MIXTE
+}
+
+enum RecordType {
+  ALIMENTATION
+  VACCINATION
+  TRAITEMENT
+  RENDEMENT
+}
+
+enum AlertPriority {
+  URGENT
+  NORMAL
+  INFO
+}
+
+enum AlertKind {
+  VACCIN
+  CLIMAT
+  TRAITEMENT
+}
+
+enum DroneStatus {
+  DEMANDE_ENVOYEE // demande créée par le producteur
+  PLANIFIE        // créneau confirmé par un pilote
+  REALISE         // survol effectué, images en traitement
+  RAPPORT_PRET    // rapport agronomique disponible
+  ANNULE
+}
+
+enum DronePack {
+  SURVOL   // cartographie RGB simple
+  SANTE    // diagnostic NDVI + rapport
+  COMPLET  // NDVI + thermique + comptage
+}
+
+// ---------- Utilisateur & authentification ----------
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  phone        String?  @unique
+  passwordHash String
+  fullName     String
+  role         Role     @default(PRODUCTEUR)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Un compte PRODUCTEUR possède un profil de ferme.
+  producer Producer?
+
+  @@map("users")
+}
+
+// ---------- Profil producteur (ferme) ----------
+
+model Producer {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  zone      Zone
+  farmType  FarmType @default(MIXTE)
+  // Effectifs / surfaces déclarés (servent au tableau de bord et au score)
+  poultryCount Int   @default(0)
+  hectares     Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  records  Record[]
+  alerts   Alert[]
+  missions DroneMission[]
+  scores   ScoreSnapshot[]
+
+  @@map("producers")
+}
+
+// ---------- Registre digital ----------
+
+model Record {
+  id         String     @id @default(uuid())
+  producerId String
+  producer   Producer   @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  type       RecordType
+  farmType   FarmType   // AVICOLE ou AGRICOLE
+  detail     String
+  quantity   String?    // texte libre : "320 sujets", "45 kg", "0,5 ha"
+  zone       Zone
+
+  // Détails spécifiques stockés en JSON (espèce/effectif/vaccin OU culture/sol/rendement...)
+  // Flexible : évite des dizaines de colonnes nullables.
+  details    Json?
+
+  occurredAt DateTime   @default(now())
+  createdAt  DateTime   @default(now())
+
+  @@index([producerId, type])
+  @@index([producerId, occurredAt])
+  @@map("records")
+}
+
+// ---------- Alertes ----------
+
+model Alert {
+  id         String        @id @default(uuid())
+  producerId String
+  producer   Producer      @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  priority   AlertPriority
+  kind       AlertKind
+  title      String
+  description String
+  dueAt      DateTime?     // échéance (rappel vaccinal, traitement programmé)
+  resolved   Boolean       @default(false)
+
+  createdAt  DateTime      @default(now())
+
+  @@index([producerId, resolved])
+  @@map("alerts")
+}
+
+// ---------- Drones : missions & rapports ----------
+
+model DroneMission {
+  id         String      @id @default(uuid())
+  producerId String
+  producer   Producer    @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  pack       DronePack
+  parcelle   String
+  culture    String
+  hectares   Float?
+  zone       Zone
+  scheduledFor DateTime?
+  note       String?
+  status     DroneStatus @default(DEMANDE_ENVOYEE)
+
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  report DroneReport?
+
+  @@index([producerId, status])
+  @@map("drone_missions")
+}
+
+model DroneReport {
+  id         String       @id @default(uuid())
+  missionId  String       @unique
+  mission    DroneMission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  ndvi          Float   // indice moyen 0..1
+  healthScore   Int     // 0..100
+  waterStress   String  // "Faible" | "Modéré" | "Élevé"
+  observation   String  // constat agronomique
+  recommendation String
+  mapUrl        String? // URL d'une carte NDVI générée (optionnel)
+
+  createdAt  DateTime @default(now())
+
+  @@map("drone_reports")
+}
+
+// ---------- Historique de score ----------
+// Un instantané est enregistré à chaque recalcul (traçabilité pour les partenaires).
+
+model ScoreSnapshot {
+  id         String   @id @default(uuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  global     Int      // 0..100
+  // Détail des critères en JSON : { "biosecurite": 70, "vaccination": 88, ... }
+  breakdown  Json
+  farmType   FarmType // volet évalué
+
+  createdAt  DateTime @default(now())
+
+  @@index([producerId, createdAt])
+  @@map("score_snapshots")
+}

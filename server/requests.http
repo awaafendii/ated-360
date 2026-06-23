@@ -1,0 +1,97 @@
+### ATED-360 — Requêtes d'exemple
+### Utilisable avec l'extension "REST Client" de VS Code, ou comme référence curl.
+### Remplacez {{token}} par le token reçu à la connexion.
+
+@base = http://localhost:4000/api
+
+### Santé de l'API
+GET {{base}}/health
+
+### Inscription d'un producteur
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Aïcha Barry",
+  "email": "aicha@ferme.gn",
+  "phone": "+224620111222",
+  "password": "Password123",
+  "role": "PRODUCTEUR",
+  "zone": "MAMOU",
+  "farmType": "AVICOLE"
+}
+
+### Connexion (compte de démonstration)
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "mariama@ferme.gn",
+  "password": "Password123"
+}
+
+### Profil de l'utilisateur connecté
+GET {{base}}/auth/me
+Authorization: Bearer {{token}}
+
+### Tableau de bord du producteur
+GET {{base}}/producers/dashboard
+Authorization: Bearer {{token}}
+
+### Enregistrer une activité avicole
+POST {{base}}/records
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "VACCINATION",
+  "farmType": "AVICOLE",
+  "detail": "Vaccin Gumboro — lot B2",
+  "quantity": "320 sujets",
+  "zone": "LABE",
+  "details": { "espece": "Pondeuse", "effectif": 320, "vaccin": "Gumboro" }
+}
+
+### Historique des activités (filtré + paginé)
+GET {{base}}/records?type=VACCINATION&page=1&limit=20
+Authorization: Bearer {{token}}
+
+### Alertes actives
+GET {{base}}/alerts?resolved=false
+Authorization: Bearer {{token}}
+
+### Résumé des alertes
+GET {{base}}/alerts/summary
+Authorization: Bearer {{token}}
+
+### Score (volet avicole)
+GET {{base}}/score?farmType=AVICOLE
+Authorization: Bearer {{token}}
+
+### Demander un survol drone
+POST {{base}}/drones/missions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "pack": "SANTE",
+  "parcelle": "Bas-fond riz nord",
+  "culture": "Riz",
+  "hectares": 2.5,
+  "zone": "LABE",
+  "scheduledFor": "2026-07-01"
+}
+
+### Générer le rapport d'une mission (remplacez :id)
+POST {{base}}/drones/missions/:id/report
+Authorization: Bearer {{token}}
+
+### --- Espace PARTENAIRE (connectez-vous avec partenaire@credit.gn) ---
+
+### Synthèse du réseau
+GET {{base}}/partners/summary
+Authorization: Bearer {{token}}
+
+### Portefeuille de producteurs
+GET {{base}}/partners/producers?zone=LABE
+Authorization: Bearer {{token}}

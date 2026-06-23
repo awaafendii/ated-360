@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ated360-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ated
+      POSTGRES_PASSWORD: ated_password
+      POSTGRES_DB: ated360
+    ports:
+      - "5432:5432"
+    volumes:
+      - ated_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ated -d ated360"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ated_pgdata:
