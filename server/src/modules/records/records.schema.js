@@ -1,6 +1,20 @@
 import { z } from "zod";
 
-const ZONES = ["CONAKRY", "KINDIA", "BOKE", "MAMOU", "LABE", "FARANAH", "KANKAN", "NZEREKORE"];
+const ZONES = [
+  "BEYLA", "BOFFA", "BOKE", "CONAKRY", "COYAH",
+  "DABOLA", "DALABA", "DINGUIRAYE", "DUBREKA",
+  "FARANAH", "FORECARIAH", "FRIA",
+  "GAOUAL", "GUECKEDOU",
+  "KANKAN", "KAMSAR", "KEROUANE", "KINDIA", "KISSIDOUGOU",
+  "KOUNDARA", "KOUROUSSA", "KOUBIA",
+  "LABE", "LELOUMA", "LOLA",
+  "MACENTA", "MALI", "MANDIANA", "MAMOU",
+  "NZEREKORE",
+  "PITA",
+  "SANGAREDI", "SIGUIRI",
+  "TELIMELE", "TOUGUE",
+  "YOMOU",
+];
 
 const aviculturalDetails = z.object({
   sousType: z.string().max(60).optional(),

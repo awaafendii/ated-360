@@ -24,8 +24,19 @@ export const fmtDate = (s) => new Date(s).toLocaleDateString("fr-FR", { day: "2-
 
 // Libellés FR pour les enums renvoyées par l'API.
 export const ZONE_LABELS = {
-  CONAKRY: "Conakry", KINDIA: "Kindia", BOKE: "Boké", MAMOU: "Mamou",
-  LABE: "Labé", FARANAH: "Faranah", KANKAN: "Kankan", NZEREKORE: "Nzérékoré",
+  BEYLA: "Beyla", BOFFA: "Boffa", BOKE: "Boké", CONAKRY: "Conakry", COYAH: "Coyah",
+  DABOLA: "Dabola", DALABA: "Dalaba", DINGUIRAYE: "Dinguiraye", DUBREKA: "Dubréka",
+  FARANAH: "Faranah", FORECARIAH: "Forécariah", FRIA: "Fria",
+  GAOUAL: "Gaoual", GUECKEDOU: "Guéckédou",
+  KANKAN: "Kankan", KAMSAR: "Kamsar", KEROUANE: "Kérouané", KINDIA: "Kindia", KISSIDOUGOU: "Kissidougou",
+  KOUNDARA: "Koundara", KOUROUSSA: "Kouroussa", KOUBIA: "Koubia",
+  LABE: "Labé", LELOUMA: "Lélouma", LOLA: "Lola",
+  MACENTA: "Macenta", MALI: "Mali", MANDIANA: "Mandiana", MAMOU: "Mamou",
+  NZEREKORE: "Nzérékoré",
+  PITA: "Pita",
+  SANGAREDI: "Sangaredi", SIGUIRI: "Siguiri",
+  TELIMELE: "Télimélé", TOUGUE: "Tougué",
+  YOMOU: "Yomou",
 };
 export const ZONES = Object.keys(ZONE_LABELS);
 
