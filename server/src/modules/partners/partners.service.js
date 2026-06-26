@@ -1,9 +1,20 @@
+import nodemailer from "nodemailer";
 import { prisma } from "../../config/prisma.js";
 import { notFound } from "../../utils/AppError.js";
 import { computeScore } from "../score/score.service.js";
 
-// Vue d'ensemble du réseau : liste des producteurs avec score courant,
-// destinée aux partenaires (banques, ONG, coopératives). Lecture seule.
+const OFFER_RECIPIENT = "brahamcamara6@gmail.com";
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
 export async function listProducers({ zone, search } = {}) {
   const producers = await prisma.producer.findMany({
     where: {
@@ -16,7 +27,6 @@ export async function listProducers({ zone, search } = {}) {
     orderBy: { createdAt: "desc" },
   });
 
-  // Score calculé à la volée pour chaque producteur (volet selon farmType).
   const enriched = await Promise.all(
     producers.map(async (p) => {
       const farmType = p.farmType === "AGRICOLE" ? "AGRICOLE" : "AVICOLE";
@@ -52,7 +62,6 @@ export async function getNetworkSummary() {
     eligible,
     toMonitor: total - eligible,
     avgScore,
-    // Producteurs prêts pour une offre de financement (score élevé).
     financingReady: producers.filter((p) => p.score >= 84).length,
   };
 }
@@ -63,6 +72,7 @@ export async function getProducerDetail(producerId) {
     include: {
       user: { select: { fullName: true, email: true, phone: true } },
       scores: { orderBy: { createdAt: "desc" }, take: 6 },
+      records: { orderBy: { occurredAt: "desc" }, take: 20 },
     },
   });
   if (!producer) throw notFound("Producteur introuvable");
@@ -80,5 +90,34 @@ export async function getProducerDetail(producerId) {
     hectares: producer.hectares,
     score,
     history: producer.scores,
+    records: producer.records,
   };
+}
+
+export async function sendOffer({ producerId, partnerName, message, amount, phone, email }) {
+  const producer = await prisma.producer.findUnique({
+    where: { id: producerId },
+    include: { user: { select: { fullName: true } } },
+  });
+  if (!producer) throw notFound("Producteur introuvable");
+
+  const html = `
+    <h2>Nouvelle offre partenaire — ATED-360</h2>
+    <table style="border-collapse:collapse;font-family:sans-serif;">
+      <tr><td style="padding:6px 12px;font-weight:bold;">Partenaire</td><td style="padding:6px 12px;">${partnerName}</td></tr>
+      ${email ? `<tr><td style="padding:6px 12px;font-weight:bold;">E-mail partenaire</td><td style="padding:6px 12px;">${email}</td></tr>` : ""}
+      ${phone ? `<tr><td style="padding:6px 12px;font-weight:bold;">Téléphone</td><td style="padding:6px 12px;">${phone}</td></tr>` : ""}
+      <tr><td style="padding:6px 12px;font-weight:bold;">Producteur visé</td><td style="padding:6px 12px;">${producer.user.fullName}</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:bold;">Zone</td><td style="padding:6px 12px;">${producer.zone}</td></tr>
+      ${amount ? `<tr><td style="padding:6px 12px;font-weight:bold;">Montant proposé</td><td style="padding:6px 12px;">${amount}</td></tr>` : ""}
+      <tr><td style="padding:6px 12px;font-weight:bold;">Message</td><td style="padding:6px 12px;">${message}</td></tr>
+    </table>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.SMTP_USER || "noreply@ated360.com",
+    to: OFFER_RECIPIENT,
+    subject: `[ATED-360] Offre de ${partnerName} pour ${producer.user.fullName}`,
+    html,
+  });
 }

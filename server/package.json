@@ -18,7 +18,14 @@
   "prisma": {
     "seed": "node prisma/seed.js"
   },
-  "keywords": ["ated-360", "agriculture", "aviculture", "guinee", "api", "express"],
+  "keywords": [
+    "ated-360",
+    "agriculture",
+    "aviculture",
+    "guinee",
+    "api",
+    "express"
+  ],
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -30,6 +37,7 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "nodemailer": "^9.0.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {

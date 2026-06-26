@@ -104,4 +104,12 @@ export const partnersApi = {
     const { data } = await http.get(`/partners/producers${qs ? `?${qs}` : ""}`);
     return data;
   },
+  async producerDetail(id) {
+    const { data } = await http.get(`/partners/producers/${id}`);
+    return data;
+  },
+  async sendOffer(payload) {
+    const { data } = await http.post("/partners/offers", payload);
+    return data;
+  },
 };

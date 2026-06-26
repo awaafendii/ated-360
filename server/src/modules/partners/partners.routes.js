@@ -8,17 +8,38 @@ import * as partnersService from "./partners.service.js";
 
 const router = Router();
 
-const ZONES = ["CONAKRY", "KINDIA", "BOKE", "MAMOU", "LABE", "FARANAH", "KANKAN", "NZEREKORE"];
+const ZONES = [
+  "BEYLA", "BOFFA", "BOKE", "CONAKRY", "COYAH",
+  "DABOLA", "DALABA", "DINGUIRAYE", "DUBREKA",
+  "FARANAH", "FORECARIAH", "FRIA",
+  "GAOUAL", "GUECKEDOU",
+  "KANKAN", "KAMSAR", "KEROUANE", "KINDIA", "KISSIDOUGOU",
+  "KOUNDARA", "KOUROUSSA", "KOUBIA",
+  "LABE", "LELOUMA", "LOLA",
+  "MACENTA", "MALI", "MANDIANA", "MAMOU",
+  "NZEREKORE",
+  "PITA",
+  "SANGAREDI", "SIGUIRI",
+  "TELIMELE", "TOUGUE",
+  "YOMOU",
+];
 
 const listQuerySchema = z.object({
   zone: z.enum(ZONES).optional(),
   search: z.string().max(120).optional(),
 });
 
-// Espace réservé aux partenaires (banques, ONG, coopératives).
+const offerSchema = z.object({
+  producerId: z.string().uuid(),
+  partnerName: z.string().min(1).max(120),
+  message: z.string().min(5, "Le message doit contenir au moins 5 caractères").max(1000),
+  amount: z.string().max(60).optional(),
+  phone: z.string().max(30).optional(),
+  email: z.string().email().optional(),
+});
+
 router.use(authenticate, authorize("PARTENAIRE"));
 
-// GET /api/partners/summary — indicateurs agrégés du réseau
 router.get(
   "/summary",
   asyncHandler(async (req, res) => {
@@ -27,7 +48,6 @@ router.get(
   })
 );
 
-// GET /api/partners/producers — portefeuille de producteurs avec scores
 router.get(
   "/producers",
   validate(listQuerySchema, "query"),
@@ -37,12 +57,20 @@ router.get(
   })
 );
 
-// GET /api/partners/producers/:id — fiche détaillée d'un producteur
 router.get(
   "/producers/:id",
   asyncHandler(async (req, res) => {
     const detail = await partnersService.getProducerDetail(req.params.id);
     ok(res, detail);
+  })
+);
+
+router.post(
+  "/offers",
+  validate(offerSchema),
+  asyncHandler(async (req, res) => {
+    await partnersService.sendOffer(req.body);
+    ok(res, { sent: true });
   })
 );
 

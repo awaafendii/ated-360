@@ -8,7 +8,21 @@ import * as producersService from "./producers.service.js";
 
 const router = Router();
 
-const ZONES = ["CONAKRY", "KINDIA", "BOKE", "MAMOU", "LABE", "FARANAH", "KANKAN", "NZEREKORE"];
+const ZONES = [
+  "BEYLA", "BOFFA", "BOKE", "CONAKRY", "COYAH",
+  "DABOLA", "DALABA", "DINGUIRAYE", "DUBREKA",
+  "FARANAH", "FORECARIAH", "FRIA",
+  "GAOUAL", "GUECKEDOU",
+  "KANKAN", "KAMSAR", "KEROUANE", "KINDIA", "KISSIDOUGOU",
+  "KOUNDARA", "KOUROUSSA", "KOUBIA",
+  "LABE", "LELOUMA", "LOLA",
+  "MACENTA", "MALI", "MANDIANA", "MAMOU",
+  "NZEREKORE",
+  "PITA",
+  "SANGAREDI", "SIGUIRI",
+  "TELIMELE", "TOUGUE",
+  "YOMOU",
+];
 
 const updateProfileSchema = z.object({
   zone: z.enum(ZONES).optional(),

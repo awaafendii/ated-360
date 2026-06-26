@@ -37,6 +37,7 @@ export async function register(input) {
       phone: input.phone,
       passwordHash,
       role: input.role,
+      zone: input.zone,
       producer:
         input.role === "PRODUCTEUR"
           ? {

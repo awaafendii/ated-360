@@ -25,6 +25,7 @@ async function main() {
       phone: "+224620000001",
       passwordHash,
       role: "PRODUCTEUR",
+      zone: "LABE",
       producer: {
         create: { zone: "LABE", farmType: "MIXTE", poultryCount: 1240, hectares: 6 },
       },
@@ -41,6 +42,7 @@ async function main() {
       phone: "+224620000099",
       passwordHash,
       role: "PARTENAIRE",
+      zone: "CONAKRY",
     },
   });
 
@@ -58,6 +60,7 @@ async function main() {
         email: o.email,
         passwordHash,
         role: "PRODUCTEUR",
+        zone: o.zone,
         producer: { create: { zone: o.zone, farmType: o.farmType, poultryCount: o.poultry, hectares: o.ha } },
       },
     });

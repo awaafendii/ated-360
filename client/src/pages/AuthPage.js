@@ -19,8 +19,8 @@ export default function AuthPage() {
       if (mode === "login") {
         await login(form.email, form.password);
       } else {
-        const payload = { fullName: form.fullName, email: form.email, password: form.password, role };
-        if (role === "PRODUCTEUR") { payload.zone = form.zone; payload.farmType = form.farmType; }
+        const payload = { fullName: form.fullName, email: form.email, password: form.password, role, zone: form.zone };
+        if (role === "PRODUCTEUR") { payload.farmType = form.farmType; }
         await register(payload);
       }
     } catch (err) {
@@ -80,12 +80,12 @@ export default function AuthPage() {
               </div>
               <label style={lblS}>Nom et prénoms</label>
               <input value={form.fullName} onChange={set("fullName")} placeholder="Mariama Baldé" style={inpS} />
+              <label style={lblS}>Ville (Guinée)</label>
+              <select value={form.zone} onChange={set("zone")} style={inpS}>
+                {ZONES.map((z) => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}
+              </select>
               {role === "PRODUCTEUR" && (
                 <>
-                  <label style={lblS}>Zone d'exploitation (Guinée)</label>
-                  <select value={form.zone} onChange={set("zone")} style={inpS}>
-                    {ZONES.map((z) => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}
-                  </select>
                   <label style={lblS}>Type de ferme</label>
                   <select value={form.farmType} onChange={set("farmType")} style={inpS}>
                     <option value="AVICOLE">Avicole</option>
