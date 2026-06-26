@@ -2,24 +2,31 @@ import { z } from "zod";
 
 const ZONES = ["CONAKRY", "KINDIA", "BOKE", "MAMOU", "LABE", "FARANAH", "KANKAN", "NZEREKORE"];
 
-// Détails spécifiques par filière (tous optionnels, stockés en JSON).
 const aviculturalDetails = z.object({
+  sousType: z.string().max(60).optional(),
   espece: z.string().max(60).optional(),
-  effectif: z.coerce.number().int().nonnegative().optional(),
+  race: z.string().max(60).optional(),
+  effectif: z.coerce.string().max(20).optional(),
+  effectifInitial: z.coerce.string().max(20).optional(),
+  morts: z.coerce.string().max(20).optional(),
   ageSemaines: z.coerce.number().int().nonnegative().optional(),
   mortalitePct: z.coerce.number().min(0).max(100).optional(),
   vaccin: z.string().max(60).optional(),
-  ponteParJour: z.coerce.number().int().nonnegative().optional(),
+  ponteParJour: z.coerce.string().max(20).optional(),
 });
 
 const agriculturalDetails = z.object({
-  culture: z.string().max(60).optional(),
-  surfaceHa: z.coerce.number().nonnegative().optional(),
   phase: z.string().max(60).optional(),
+  culture: z.string().max(60).optional(),
+  variete: z.string().max(60).optional(),
+  surfaceHa: z.coerce.string().max(20).optional(),
   typeSol: z.string().max(60).optional(),
   intrant: z.string().max(120).optional(),
+  productionTotale: z.coerce.string().max(20).optional(),
   rendementTHa: z.coerce.number().nonnegative().optional(),
 });
+
+const detailsSchema = aviculturalDetails.merge(agriculturalDetails);
 
 export const createRecordSchema = z
   .object({
@@ -29,13 +36,12 @@ export const createRecordSchema = z
     quantity: z.string().max(60).optional(),
     zone: z.enum(ZONES),
     occurredAt: z.coerce.date().optional(),
-    details: z.union([aviculturalDetails, agriculturalDetails]).optional(),
+    details: detailsSchema.optional(),
   })
   .refine(
     (d) =>
       d.farmType !== "AVICOLE" ||
       d.type !== "VACCINATION" ||
-      // une vaccination avicole devrait préciser le vaccin
       (d.details && "vaccin" in d.details),
     { message: "Précisez le vaccin pour une vaccination avicole", path: ["details", "vaccin"] }
   );
