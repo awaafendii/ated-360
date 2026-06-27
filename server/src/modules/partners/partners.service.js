@@ -5,15 +5,18 @@ import { computeScore } from "../score/score.service.js";
 
 const OFFER_RECIPIENT = "brahamcamara6@gmail.com";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+function createTransporter() {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp-relay.brevo.com",
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
 
 export async function listProducers({ zone, search } = {}) {
   const producers = await prisma.producer.findMany({
@@ -114,10 +117,21 @@ export async function sendOffer({ producerId, partnerName, message, amount, phon
     </table>
   `;
 
-  await transporter.sendMail({
-    from: process.env.SMTP_USER || "noreply@ated360.com",
-    to: OFFER_RECIPIENT,
-    subject: `[ATED-360] Offre de ${partnerName} pour ${producer.user.fullName}`,
-    html,
-  });
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.warn("⚠️ SMTP non configuré — offre enregistrée mais email non envoyé.");
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: OFFER_RECIPIENT,
+      subject: `[ATED-360] Offre de ${partnerName} pour ${producer.user.fullName}`,
+      html,
+    });
+  } catch (err) {
+    console.error("❌ Erreur envoi email :", err.message);
+    throw new Error("L'offre n'a pas pu être envoyée par email. Vérifiez la configuration SMTP.");
+  }
 }
