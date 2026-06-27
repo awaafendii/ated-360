@@ -119,19 +119,19 @@ export async function sendOffer({ producerId, partnerName, message, amount, phon
 
   const transporter = createTransporter();
   if (!transporter) {
-    console.warn("⚠️ SMTP non configuré — offre enregistrée mais email non envoyé.");
+    console.warn("⚠️ SMTP non configuré — offre acceptée mais email non envoyé.");
     return;
   }
 
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: `"ATED-360" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to: OFFER_RECIPIENT,
       subject: `[ATED-360] Offre de ${partnerName} pour ${producer.user.fullName}`,
       html,
     });
+    console.log(`✅ Email offre envoyé à ${OFFER_RECIPIENT}`);
   } catch (err) {
-    console.error("❌ Erreur envoi email :", err.message);
-    throw new Error("L'offre n'a pas pu être envoyée par email. Vérifiez la configuration SMTP.");
+    console.error("❌ Erreur envoi email :", err.message, err.response);
   }
 }
