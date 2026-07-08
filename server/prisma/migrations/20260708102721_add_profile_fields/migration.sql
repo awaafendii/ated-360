@@ -1,0 +1,44 @@
+-- AlterEnum
+-- This migration adds more than one value to an enum.
+-- With PostgreSQL versions 11 and earlier, this is not possible
+-- in a single migration. This can be worked around by creating
+-- multiple migrations, each migration adding only one value to
+-- the enum.
+
+
+ALTER TYPE "Zone" ADD VALUE 'BEYLA';
+ALTER TYPE "Zone" ADD VALUE 'BOFFA';
+ALTER TYPE "Zone" ADD VALUE 'COYAH';
+ALTER TYPE "Zone" ADD VALUE 'DABOLA';
+ALTER TYPE "Zone" ADD VALUE 'DALABA';
+ALTER TYPE "Zone" ADD VALUE 'DINGUIRAYE';
+ALTER TYPE "Zone" ADD VALUE 'DUBREKA';
+ALTER TYPE "Zone" ADD VALUE 'FORECARIAH';
+ALTER TYPE "Zone" ADD VALUE 'FRIA';
+ALTER TYPE "Zone" ADD VALUE 'GAOUAL';
+ALTER TYPE "Zone" ADD VALUE 'GUECKEDOU';
+ALTER TYPE "Zone" ADD VALUE 'KAMSAR';
+ALTER TYPE "Zone" ADD VALUE 'KEROUANE';
+ALTER TYPE "Zone" ADD VALUE 'KISSIDOUGOU';
+ALTER TYPE "Zone" ADD VALUE 'KOUNDARA';
+ALTER TYPE "Zone" ADD VALUE 'KOUROUSSA';
+ALTER TYPE "Zone" ADD VALUE 'KOUBIA';
+ALTER TYPE "Zone" ADD VALUE 'LELOUMA';
+ALTER TYPE "Zone" ADD VALUE 'LOLA';
+ALTER TYPE "Zone" ADD VALUE 'MACENTA';
+ALTER TYPE "Zone" ADD VALUE 'MALI';
+ALTER TYPE "Zone" ADD VALUE 'MANDIANA';
+ALTER TYPE "Zone" ADD VALUE 'PITA';
+ALTER TYPE "Zone" ADD VALUE 'SANGAREDI';
+ALTER TYPE "Zone" ADD VALUE 'SIGUIRI';
+ALTER TYPE "Zone" ADD VALUE 'TELIMELE';
+ALTER TYPE "Zone" ADD VALUE 'TOUGUE';
+ALTER TYPE "Zone" ADD VALUE 'YOMOU';
+
+-- AlterTable
+ALTER TABLE "producers" ADD COLUMN     "cultures" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN     "fieldLocation" TEXT;
+
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN     "dateOfBirth" TIMESTAMP(3),
+ADD COLUMN     "zone" "Zone";

@@ -1,27 +1,29 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { Wheat, Syringe, Pill, TrendingUp, Bird, Sprout, Plus, Ruler, FlaskConical, MapPin, Tractor, Sprout as Seed, Scissors, CloudRain, Skull, Egg } from "lucide-react";
+import { Wheat, Syringe, Pill, TrendingUp, Bird, Sprout, Plus, Ruler, FlaskConical, MapPin, Tractor, Sprout as Seed, Scissors, CloudRain, Skull, Egg, HelpCircle } from "lucide-react";
 import { recordsApi } from "../api/index.js";
 import { useAuth } from "../context/AuthContext.js";
 import { C, card, lblS, inpS, fmtDate, ZONES, ZONE_LABELS } from "../styles/theme.js";
 import { Page, Row, H, Spinner, ErrorBanner } from "../components/ui.js";
+import { CULTURES_WITH_AUTRE, AUTRE_CULTURE, VARIETES_PAR_CULTURE } from "../data/cultures.js";
 
 /* Activités par profil. Chaque activité visible est rattachée à un
-   "type" technique existant en base, pour éviter toute migration. */
+   "type" technique existant en base, pour éviter toute migration.
+   "help" = aide contextuelle affichée sous le libellé lorsque l'activité est sélectionnée. */
 const AGRI_ACTIVITIES = [
-  { key: "PREPA_SOL",     label: "Préparation sol", type: "TRAITEMENT",   icon: Tractor },
-  { key: "SEMIS",         label: "Semis",           type: "ALIMENTATION", icon: Seed },
-  { key: "FERTILISATION", label: "Fertilisation",   type: "TRAITEMENT",   icon: FlaskConical },
-  { key: "DESHERBAGE",    label: "Désherbage",      type: "TRAITEMENT",   icon: Scissors },
-  { key: "TRAITEMENT",    label: "Traitement",      type: "TRAITEMENT",   icon: Pill },
-  { key: "IRRIGATION",    label: "Irrigation",      type: "TRAITEMENT",   icon: CloudRain },
-  { key: "RECOLTE",       label: "Récolte",         type: "RENDEMENT",    icon: Wheat },
+  { key: "PREPA_SOL",     label: "Préparation sol", type: "TRAITEMENT",   icon: Tractor,  help: "Labour, hersage ou tout travail du sol avant semis." },
+  { key: "SEMIS",         label: "Semis",           type: "ALIMENTATION", icon: Seed,     help: "Mise en terre des graines ou plants sur la parcelle." },
+  { key: "FERTILISATION", label: "Fertilisation",   type: "TRAITEMENT",   icon: FlaskConical, help: "Apport d'engrais organique ou minéral (précisez l'intrant ci-dessous)." },
+  { key: "DESHERBAGE",    label: "Désherbage",      type: "TRAITEMENT",   icon: Scissors, help: "Élimination manuelle ou chimique des mauvaises herbes." },
+  { key: "TRAITEMENT",    label: "Traitement",      type: "TRAITEMENT",   icon: Pill,     help: "Application d'un produit phytosanitaire contre maladies ou nuisibles." },
+  { key: "IRRIGATION",    label: "Irrigation",      type: "TRAITEMENT",   icon: CloudRain,help: "Apport d'eau en dehors des pluies naturelles." },
+  { key: "RECOLTE",       label: "Récolte",         type: "RENDEMENT",    icon: Wheat,    help: "Collecte de la production ; le rendement (t/ha) est calculé automatiquement." },
 ];
 const AVI_ACTIVITIES = [
-  { key: "ALIMENTATION", label: "Alimentation",      type: "ALIMENTATION", icon: Wheat },
-  { key: "VACCINATION",  label: "Vaccination",       type: "VACCINATION",  icon: Syringe },
-  { key: "TRAITEMENT",   label: "Traitement",        type: "TRAITEMENT",   icon: Pill },
-  { key: "MORTALITE",    label: "Mortalité",         type: "RENDEMENT",    icon: Skull },
-  { key: "PONTE",        label: "Ponte / Rendement", type: "RENDEMENT",    icon: Egg },
+  { key: "ALIMENTATION", label: "Alimentation",      type: "ALIMENTATION", icon: Wheat,   help: "Distribution de nourriture ou de compléments à la volaille/au cheptel." },
+  { key: "VACCINATION",  label: "Vaccination",       type: "VACCINATION",  icon: Syringe, help: "Administration d'un vaccin ; précisez lequel ci-dessous." },
+  { key: "TRAITEMENT",   label: "Traitement",        type: "TRAITEMENT",   icon: Pill,    help: "Traitement médical ou antiparasitaire du cheptel." },
+  { key: "MORTALITE",    label: "Mortalité",         type: "RENDEMENT",    icon: Skull,   help: "Déclaration des sujets morts ; le taux de mortalité est calculé automatiquement." },
+  { key: "PONTE",        label: "Ponte / Rendement", type: "RENDEMENT",    icon: Egg,     help: "Production du jour (œufs, lait, etc.)." },
 ];
 const ACT_BY_KEY = Object.fromEntries([...AGRI_ACTIVITIES, ...AVI_ACTIVITIES].map((a) => [a.key, a]));
 
@@ -35,54 +37,6 @@ const RACES_PAR_ESPECE = {
   "Canard": ["Canard de Barbarie", "Canard Pékin", "Canard local"],
   "Dinde": ["Dinde locale", "Dinde Nicholas", "Dinde BUT"],
   "Lapin": ["Lapin Néo-Zélandais Blanc", "Lapin local amélioré", "Lapin croisé local", "Californien", "Lapin Rex"],
-};
-
-/* Cultures pratiquées en Guinée + variétés associées. */
-const CULTURES = [
-  "Riz", "Manioc", "Maïs", "Fonio", "Arachide", "Igname", "Patate douce",
-  "Mil / Sorgho", "Café", "Ananas", "Orange", "Goyave", "Banane / Plantain", "Mangue",
-  "Agrumes", "Palmier à huile", "Coton", "Anacarde (cajou)", "Sésame",
-  "Pomme de terre", "Tomate", "Oignon", "Aubergine", "Gombo", "Chou",
-  "Carotte", "Poivron", "Piment", "Courgette", "Haricot", "Pois", "Betterave",
-  "Chou-fleur", "Brocoli", "Laitue", "Persil",
-];
-const VARIETES_PAR_CULTURE = {
-  "Riz": ["NERICA", "Kabako", "Riz de bas-fond local", "Riz pluvial local", "Sahel 108"],
-  "Manioc": ["Manioc local doux", "Manioc amer", "IRAG variété améliorée", "TMS"],
-  "Maïs": ["Maïs jaune local", "Maïs blanc", "Variété hybride améliorée", "DMR"],
-  "Fonio": ["Fonio blanc (Pôdji)", "Fonio noir", "Fonio précoce", "Fonio tardif"],
-  "Arachide": ["Arachide locale", "Variété hâtive", "Variété à gros calibre"],
-  "Igname": ["Igname blanche", "Igname jaune", "Variété locale précoce"],
-  "Patate douce": ["Patate à chair orange", "Patate à chair blanche", "Variété locale"],
-  "Mil / Sorgho": ["Mil local", "Sorgho rouge", "Sorgho blanc"],
-  "Café": ["Robusta", "Arabica", "Café local"],
-  "Ananas": ["Baronne de Guinée", "Cayenne lisse", "Pain de sucre"],
-  "Orange": ["Orange locale","Citron", "Pamplemousse", "Orange Navel"],
-  "Goyave": ["Goyave locale", "Variété améliorée"],
-  "Banane / Plantain": ["Plantain corne", "Plantain french", "Banane douce locale"],
-  "Mangue": ["Mangue Kent", "Mangue Amélie", "Mangue locale"],
-  "Agrumes": ["Orange locale", "Mandarine", "Citron", "Pamplemousse"],
-  "Palmier à huile": ["Palmier Tenera", "Palmier Dura", "Variété locale"],
-  "Coton": ["Coton local", "Variété améliorée"],
-  "Anacarde (cajou)": ["Cajou local", "Variété greffée"],
-  "Sésame": ["Sésame blanc", "Sésame local"],
-  "Pomme de terre": ["Variété locale du Fouta", "Variété importée"],
-  "Tomate": ["Tomate locale", "Variété Roma", "Variété hybride"],
-  "Oignon": ["Oignon violet de Galmi", "Oignon local"],
-  "Aubergine": ["Aubergine locale (Jaxatu)", "Aubergine violette"],
-  "Gombo": ["Gombo local", "Variété améliorée"],
-  "Chou": ["Chou vert", "Chou pommé", "Chou frisé"],
-  "Carotte": ["Carotte locale", "Carotte orange", "Carotte violette"],
-  "Poivron": ["Poivron vert", "Poivron rouge", "Poivron jaune"],
-  "Piment": ["Piment local", "Piment fort", "Piment doux"],
-  "Courgette": ["Courgette verte", "Courgette jaune"],
-  "Haricot": ["Haricot local", "Haricot nain", "Haricot grimpant"],
-  "Pois": ["Pois local", "Pois chiche", "Pois d'Angole"],
-  "Betterave": ["Betterave rouge", "Betterave blanche"],
-  "Chou-fleur": ["Chou-fleur blanc", "Chou-fleur violet"],
-  "Brocoli": ["Brocoli vert", "Brocoli violet"],
-  "Laitue": ["Laitue romaine", "Laitue pommée"],
-  "Persil": ["Persil plat", "Persil frisé"],
 };
 
 export default function RegistrePage() {
@@ -104,7 +58,7 @@ export default function RegistrePage() {
 
   const [base, setBase] = useState({ detail: "", zone: "CONAKRY" });
   const [avi, setAvi] = useState({ espece: "Pondeuse", race: "", effectifInitial: "", morts: "", ponte: "", vaccin: "" });
-  const [agri, setAgri] = useState({ culture: "Riz", variete: "", surface: "", typeSol: "Argilo-limoneux", intrant: "", production: "" });
+  const [agri, setAgri] = useState({ culture: "Riz", cultureAutre: "", variete: "", surface: "", typeSol: "Argilo-limoneux", intrant: "", production: "" });
 
   useEffect(() => {
     const list = cat === "AVICOLE" ? AVI_ACTIVITIES : AGRI_ACTIVITIES;
@@ -157,7 +111,8 @@ export default function RegistrePage() {
         quantity = avi.ponte ? `${avi.ponte} oeufs/j` : "";
       }
     } else {
-      details = { phase: activity.label, culture: agri.culture, variete: agri.variete || undefined, surfaceHa: agri.surface || undefined, typeSol: agri.typeSol || undefined, intrant: agri.intrant || undefined };
+      const cultureFinale = agri.culture === AUTRE_CULTURE ? (agri.cultureAutre || AUTRE_CULTURE) : agri.culture;
+      details = { phase: activity.label, culture: cultureFinale, variete: agri.variete || undefined, surfaceHa: agri.surface || undefined, typeSol: agri.typeSol || undefined, intrant: agri.intrant || undefined };
       if (activityKey === "RECOLTE") {
         details.productionTotale = agri.production || undefined;
         details.rendementTHa = rendementCalcule ?? undefined;
@@ -230,17 +185,25 @@ export default function RegistrePage() {
             </>
           )}
 
-          <label style={lblS}>{cat === "AGRICOLE" ? "Phase culturale" : "Type d'activité"}</label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+            <label style={lblS}>{cat === "AGRICOLE" ? "Phase culturale" : "Type d'activité"}</label>
+            <span style={{ fontSize: 10.5, color: "#9CC4AC", fontWeight: 600 }}>Une seule activité à la fois</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
             {activities.map((a) => {
               const on = activityKey === a.key; const Ic = a.icon;
               return (
-                <button key={a.key} onClick={() => setActivityKey(a.key)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 11px", borderRadius: 10, cursor: "pointer", fontSize: 12.5, fontWeight: 600, border: `1.5px solid ${on ? C.ochre : C.line}`, background: on ? C.ochre + "12" : "#fff", color: on ? C.ochreDk : "#3A6B4D", textAlign: "left" }}>
+                <button key={a.key} onClick={() => setActivityKey(a.key)} title={a.help} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 11px", borderRadius: 10, cursor: "pointer", fontSize: 12.5, fontWeight: 600, border: `1.5px solid ${on ? C.ochre : C.line}`, background: on ? C.ochre + "12" : "#fff", color: on ? C.ochreDk : "#3A6B4D", textAlign: "left" }}>
                   <Ic size={15} /> {a.label}
                 </button>
               );
             })}
           </div>
+          {ACT_BY_KEY[activityKey]?.help && (
+            <div style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 11.5, color: "#6E9180", marginBottom: 14, padding: "8px 10px", background: C.millet, borderRadius: 9 }}>
+              <HelpCircle size={13} style={{ flexShrink: 0, marginTop: 1 }} /> {ACT_BY_KEY[activityKey].help}
+            </div>
+          )}
 
           {cat === "AVICOLE" && (
             <div style={fieldBox}>
@@ -284,14 +247,18 @@ export default function RegistrePage() {
               <F2>
                 <div><label style={lblS}>Culture</label>
                   <select value={agri.culture} onChange={(e) => setAgri({ ...agri, culture: e.target.value, variete: "" })} style={inpS}>
-                    {CULTURES.map((x) => <option key={x}>{x}</option>)}
+                    {CULTURES_WITH_AUTRE.map((x) => <option key={x}>{x}</option>)}
                   </select></div>
                 <div><label style={lblS}>Variété</label>
-                  <select value={agri.variete} onChange={(e) => setAgri({ ...agri, variete: e.target.value })} style={inpS}>
+                  <select value={agri.variete} onChange={(e) => setAgri({ ...agri, variete: e.target.value })} style={inpS} disabled={agri.culture === AUTRE_CULTURE}>
                     <option value="">— choisir —</option>
                     {(VARIETES_PAR_CULTURE[agri.culture] || []).map((v) => <option key={v}>{v}</option>)}
                   </select></div>
               </F2>
+              {agri.culture === AUTRE_CULTURE && (
+                <div><label style={lblS}>Précisez la culture</label>
+                  <input value={agri.cultureAutre} onChange={(e) => setAgri({ ...agri, cultureAutre: e.target.value })} placeholder="Ex. Baobab, Néré…" style={inpS} /></div>
+              )}
               <F2>
                 <div><label style={lblS}><Ruler size={11} /> Surface (ha)</label>
                   <input value={agri.surface} onChange={(e) => setAgri({ ...agri, surface: e.target.value })} placeholder="2.5" style={inpS} /></div>
@@ -329,6 +296,14 @@ export default function RegistrePage() {
               ))}
             </div>
           </Row>
+          {user?.producer?.cultures?.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 10 }}>
+              <span style={{ fontSize: 11, color: "#6E9180", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".03em" }}>Cultures déclarées :</span>
+              {user.producer.cultures.map((c) => (
+                <span key={c} style={{ fontSize: 11.5, fontWeight: 600, color: C.leafDk, background: C.leaf + "1A", padding: "3px 9px", borderRadius: 999 }}>{c}</span>
+              ))}
+            </div>
+          )}
           <div style={{ marginTop: 12 }}>
             {loading ? <Spinner /> : filteredItems.length === 0 ? (
               <div style={{ padding: "40px 0", textAlign: "center", color: "#6E9180", fontSize: 13.5 }}>Aucune activité. Commencez par une saisie à gauche.</div>

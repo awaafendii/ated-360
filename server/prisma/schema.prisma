@@ -96,18 +96,25 @@ enum DronePack {
   COMPLET  // NDVI + thermique + comptage
 }
 
+enum ProofType {
+  PHOTO
+  VIDEO
+  DOCUMENT
+}
+
 // ---------- Utilisateur & authentification ----------
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  phone        String?  @unique
+  id           String    @id @default(uuid())
+  email        String    @unique
+  phone        String?   @unique
   passwordHash String
   fullName     String
-  role         Role     @default(PRODUCTEUR)
+  dateOfBirth  DateTime?
+  role         Role      @default(PRODUCTEUR)
   zone         Zone?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   producer Producer?
 
@@ -123,9 +130,23 @@ model Producer {
 
   zone      Zone
   farmType  FarmType @default(MIXTE)
+  fieldLocation String? // localisation précise du champ/parcelle (au-delà de la ville)
+  cultures      String[] @default([]) // cultures pratiquées, déclarées par le producteur (multi-choix)
   // Effectifs / surfaces déclarés (servent au tableau de bord et au score)
   poultryCount Int   @default(0)
   hectares     Float @default(0)
+
+  // ---- CV & présentation de la structure (crédibilité auprès des partenaires) ----
+  cvUrl          String? // lien vers le CV téléversé (Cloudinary)
+  startYear      Int?    // année de démarrage des activités
+  investedAmount String? // montants investis dans les projets (texte libre : devise variable)
+  youthEmployed  Int?    // nombre de jeunes employés
+  womenEmployed  Int?    // nombre de femmes employées
+  annualRevenue  String? // chiffre d'affaires annuel (texte libre)
+  legalStatus    String? // "Formel" | "Informel"
+  challenges     String? // échecs rencontrés
+  achievements   String? // réussites
+  outlook        String? // perspectives / espoirs
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,8 +155,28 @@ model Producer {
   alerts   Alert[]
   missions DroneMission[]
   scores   ScoreSnapshot[]
+  proofs   Proof[]
 
   @@map("producers")
+}
+
+// ---------- Preuves (photos, vidéos, documents administratifs) ----------
+// Justifient les cultures/activités déclarées et le statut formel/informel
+// de la structure, pour sécuriser la décision des partenaires.
+
+model Proof {
+  id         String    @id @default(uuid())
+  producerId String
+  producer   Producer  @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  type       ProofType
+  label      String?
+  url        String
+
+  createdAt  DateTime  @default(now())
+
+  @@index([producerId])
+  @@map("proofs")
 }
 
 // ---------- Registre digital ----------

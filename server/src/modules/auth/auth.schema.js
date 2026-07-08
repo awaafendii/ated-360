@@ -23,12 +23,21 @@ export const registerSchema = z
     email: z.string().email("E-mail invalide"),
     phone: z
       .string()
-      .regex(/^\+?[0-9\s-]{6,20}$/, "Numéro de téléphone invalide")
-      .optional(),
+      .regex(/^\+?[0-9\s-]{6,20}$/, "Numéro de téléphone invalide"),
+    dateOfBirth: z.coerce.date().optional(),
     password: z.string().min(8, "Le mot de passe doit faire au moins 8 caractères").max(100),
     role: z.enum(["PRODUCTEUR", "PARTENAIRE"]).default("PRODUCTEUR"),
     zone: z.enum(ZONES),
     farmType: z.enum(FARM_TYPES).optional(),
+    fieldLocation: z.string().max(200).optional(),
+  })
+  .refine((data) => data.role !== "PRODUCTEUR" || !!data.dateOfBirth, {
+    message: "La date de naissance est requise pour un compte producteur",
+    path: ["dateOfBirth"],
+  })
+  .refine((data) => data.role !== "PRODUCTEUR" || !!data.fieldLocation, {
+    message: "La localisation du champ est requise pour un compte producteur",
+    path: ["fieldLocation"],
   });
 
 export const loginSchema = z.object({

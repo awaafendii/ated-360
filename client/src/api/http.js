@@ -23,8 +23,9 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, { method = "GET", body, auth = true } = {}) {
-  const headers = { "Content-Type": "application/json" };
+async function request(path, { method = "GET", body, formData, auth = true } = {}) {
+  const headers = {};
+  if (!formData) headers["Content-Type"] = "application/json";
   if (auth) {
     const token = tokenStore.get();
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -35,7 +36,7 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
     res = await fetch(`/api${path}`, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: formData || (body ? JSON.stringify(body) : undefined),
     });
   } catch {
     throw new ApiError("Impossible de joindre le serveur", 0);
@@ -60,4 +61,5 @@ export const http = {
   post: (p, body, opts) => request(p, { ...opts, method: "POST", body }),
   patch: (p, body, opts) => request(p, { ...opts, method: "PATCH", body }),
   del: (p, opts) => request(p, { ...opts, method: "DELETE" }),
+  upload: (p, formData, opts) => request(p, { ...opts, method: "POST", formData }),
 };

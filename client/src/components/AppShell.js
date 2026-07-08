@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  LayoutDashboard, ClipboardList, Plane, Bell, Gauge, LogOut, Egg, Menu, X,
+  LayoutDashboard, ClipboardList, Plane, Bell, Gauge, LogOut, Egg, Menu, X, UserCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.js";
 import { C } from "../styles/theme.js";
@@ -10,6 +10,7 @@ import DronesPage from "../pages/DronesPage.js";
 import AlertesPage from "../pages/AlertesPage.js";
 import ScorePage from "../pages/ScorePage.js";
 import PartenairesPage from "../pages/PartenairesPage.js";
+import ProfilPage from "../pages/ProfilPage.js";
 
 export default function AppShell() {
   const { user, logout } = useAuth();
@@ -18,7 +19,7 @@ export default function AppShell() {
   const [mobileNav, setMobileNav] = useState(false);
 
   const nav = isProd
-    ? [["dashboard", "Tableau de bord", LayoutDashboard], ["registre", "Registre digital", ClipboardList], ["drones", "Drones & champs", Plane], ["alertes", "Alertes", Bell], ["score", "Mon score", Gauge]]
+    ? [["dashboard", "Tableau de bord", LayoutDashboard], ["registre", "Registre digital", ClipboardList], ["drones", "Drones & champs", Plane], ["alertes", "Alertes", Bell], ["score", "Mon score", Gauge], ["profil", "Mon profil", UserCircle]]
     : [["partenaires", "Producteurs", LayoutDashboard]];
 
   const render = () => {
@@ -29,6 +30,7 @@ export default function AppShell() {
       case "alertes": return <AlertesPage />;
       case "score": return <ScorePage />;
       case "partenaires": return <PartenairesPage />;
+      case "profil": return <ProfilPage />;
       default: return null;
     }
   };
@@ -77,12 +79,15 @@ export default function AppShell() {
           <button onClick={() => setMobileNav(true)} style={{ background: "none", border: "none", cursor: "pointer", color: C.soil }}><Menu size={22} /></button>
           <span style={{ fontFamily: "'Fraunces', serif", fontSize: 18, fontWeight: 600 }}>ATED‑360</span>
         </header>
-        <div style={{ padding: "26px clamp(16px,4vw,34px)", flex: 1 }}>{render()}</div>
+        <div style={{ padding: "22px clamp(16px,3vw,30px)", flex: 1 }}>
+          <div style={{ maxWidth: 1240, margin: "0 auto" }}>{render()}</div>
+        </div>
       </main>
 
       <style>{`
         *{ box-sizing:border-box; }
         button:focus-visible, input:focus-visible, select:focus-visible{ outline:2px solid ${C.ochre}; outline-offset:2px; }
+        @media (max-width: 1100px){ .grid4{ grid-template-columns:repeat(3,1fr) !important; } }
         @media (max-width: 920px){ .dash-2col{ grid-template-columns:1fr !important; } .grid4{ grid-template-columns:repeat(2,1fr) !important; } }
         @media (max-width: 820px){ .ated-side{ display:none !important; } .ated-top{ display:flex !important; } .grid3{ grid-template-columns:1fr !important; } }
         @media (max-width: 560px){ .grid4{ grid-template-columns:1fr !important; } }

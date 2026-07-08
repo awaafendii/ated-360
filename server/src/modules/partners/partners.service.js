@@ -76,6 +76,7 @@ export async function getProducerDetail(producerId) {
       user: { select: { fullName: true, email: true, phone: true } },
       scores: { orderBy: { createdAt: "desc" }, take: 6 },
       records: { orderBy: { occurredAt: "desc" }, take: 20 },
+      proofs: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!producer) throw notFound("Producteur introuvable");
@@ -89,11 +90,26 @@ export async function getProducerDetail(producerId) {
     contact: { email: producer.user.email, phone: producer.user.phone },
     zone: producer.zone,
     farmType: producer.farmType,
+    fieldLocation: producer.fieldLocation,
+    cultures: producer.cultures,
     poultryCount: producer.poultryCount,
     hectares: producer.hectares,
     score,
     history: producer.scores,
     records: producer.records,
+    cvUrl: producer.cvUrl,
+    structure: {
+      startYear: producer.startYear,
+      investedAmount: producer.investedAmount,
+      youthEmployed: producer.youthEmployed,
+      womenEmployed: producer.womenEmployed,
+      annualRevenue: producer.annualRevenue,
+      legalStatus: producer.legalStatus,
+      challenges: producer.challenges,
+      achievements: producer.achievements,
+      outlook: producer.outlook,
+    },
+    proofs: producer.proofs,
   };
 }
 

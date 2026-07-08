@@ -10,6 +10,7 @@ function publicUser(user) {
     fullName: user.fullName,
     email: user.email,
     phone: user.phone,
+    dateOfBirth: user.dateOfBirth,
     role: user.role,
     producer: user.producer
       ? {
@@ -18,6 +19,18 @@ function publicUser(user) {
           farmType: user.producer.farmType,
           poultryCount: user.producer.poultryCount,
           hectares: user.producer.hectares,
+          fieldLocation: user.producer.fieldLocation,
+          cultures: user.producer.cultures,
+          cvUrl: user.producer.cvUrl,
+          startYear: user.producer.startYear,
+          investedAmount: user.producer.investedAmount,
+          youthEmployed: user.producer.youthEmployed,
+          womenEmployed: user.producer.womenEmployed,
+          annualRevenue: user.producer.annualRevenue,
+          legalStatus: user.producer.legalStatus,
+          challenges: user.producer.challenges,
+          achievements: user.producer.achievements,
+          outlook: user.producer.outlook,
         }
       : null,
   };
@@ -35,6 +48,7 @@ export async function register(input) {
       fullName: input.fullName,
       email: input.email,
       phone: input.phone,
+      dateOfBirth: input.dateOfBirth,
       passwordHash,
       role: input.role,
       zone: input.zone,
@@ -44,6 +58,7 @@ export async function register(input) {
               create: {
                 zone: input.zone,
                 farmType: input.farmType ?? "MIXTE",
+                fieldLocation: input.fieldLocation,
               },
             }
           : undefined,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Sprout, Gauge, ShieldCheck, Handshake, Search, MapPin, ChevronRight, X, Send, Wheat, Syringe, Pill, TrendingUp } from "lucide-react";
+import { Sprout, Gauge, ShieldCheck, Handshake, Search, MapPin, ChevronRight, X, Send, Wheat, Syringe, Pill, TrendingUp, FileText, Image, Video, File as FileIcon } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { partnersApi } from "../api/index.js";
 import { C, card, lblS, inpS, barColor, fmtDate, ZONE_LABELS } from "../styles/theme.js";
@@ -7,6 +7,7 @@ import { Page, Row, H, Tag, Stat, Spinner, ErrorBanner } from "../components/ui.
 
 const recIcon = (t) => ({ ALIMENTATION: Wheat, VACCINATION: Syringe, TRAITEMENT: Pill, RENDEMENT: TrendingUp }[t] || TrendingUp);
 const recLabel = (t) => ({ ALIMENTATION: "Alimentation", VACCINATION: "Vaccination", TRAITEMENT: "Traitement", RENDEMENT: "Rendement" }[t] || t);
+const hasStructureInfo = (s) => !!s && Object.values(s).some((v) => v !== null && v !== undefined && v !== "");
 
 function Modal({ open, onClose, children }) {
   if (!open) return null;
@@ -109,11 +110,63 @@ function ProducerDetail({ producer, onClose }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
         {detail.poultryCount > 0 && <div style={{ ...card, padding: 12, textAlign: "center" }}><div style={{ fontSize: 11, color: "#6E9180", fontWeight: 600 }}>Sujets</div><div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600, color: C.soil }}>{detail.poultryCount}</div></div>}
         {detail.hectares > 0 && <div style={{ ...card, padding: 12, textAlign: "center" }}><div style={{ fontSize: 11, color: "#6E9180", fontWeight: 600 }}>Hectares</div><div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600, color: C.soil }}>{detail.hectares}</div></div>}
         <div style={{ ...card, padding: 12, textAlign: "center" }}><div style={{ fontSize: 11, color: "#6E9180", fontWeight: 600 }}>Activités</div><div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600, color: C.soil }}>{detail.records.length}</div></div>
       </div>
+
+      {detail.fieldLocation && (
+        <div style={{ fontSize: 12.5, color: "#6E9180", marginBottom: 10, display: "flex", alignItems: "center", gap: 5 }}><MapPin size={12} /> {detail.fieldLocation}</div>
+      )}
+      {detail.cultures && detail.cultures.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 11, color: "#6E9180", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".03em", marginBottom: 7 }}>Cultures déclarées</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {detail.cultures.map((c) => <Tag key={c} bg={C.leaf + "1A"} fg={C.leafDk}>{c}</Tag>)}
+          </div>
+        </div>
+      )}
+
+      {(detail.cvUrl || hasStructureInfo(detail.structure) || (detail.proofs && detail.proofs.length > 0)) && (
+        <div style={{ ...card, padding: 16, marginBottom: 18, background: "#FAFDFB" }}>
+          <div style={{ fontSize: 11, color: "#6E9180", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".03em", marginBottom: 10 }}>Dossier producteur</div>
+
+          {detail.cvUrl && (
+            <a href={detail.cvUrl} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, color: C.ochreDk, textDecoration: "underline", marginBottom: 10 }}>
+              <FileText size={14} /> Voir le CV
+            </a>
+          )}
+
+          {hasStructureInfo(detail.structure) && (
+            <div style={{ fontSize: 12.5, color: "#3A6B4D", lineHeight: 1.7, marginBottom: detail.proofs?.length ? 12 : 0 }}>
+              {detail.structure.startYear && <div>Activité depuis <strong style={{ color: C.soil }}>{detail.structure.startYear}</strong></div>}
+              {detail.structure.legalStatus && <div>Statut : <strong style={{ color: C.soil }}>{detail.structure.legalStatus}</strong></div>}
+              {detail.structure.investedAmount && <div>Montants investis : <strong style={{ color: C.soil }}>{detail.structure.investedAmount}</strong></div>}
+              {detail.structure.annualRevenue && <div>Chiffre d'affaires annuel : <strong style={{ color: C.soil }}>{detail.structure.annualRevenue}</strong></div>}
+              {(detail.structure.youthEmployed || detail.structure.womenEmployed) && (
+                <div>Emplois créés : {detail.structure.youthEmployed ? `${detail.structure.youthEmployed} jeunes` : ""}{detail.structure.youthEmployed && detail.structure.womenEmployed ? " · " : ""}{detail.structure.womenEmployed ? `${detail.structure.womenEmployed} femmes` : ""}</div>
+              )}
+              {detail.structure.achievements && <div style={{ marginTop: 6 }}><strong style={{ color: C.soil }}>Réussites :</strong> {detail.structure.achievements}</div>}
+              {detail.structure.challenges && <div><strong style={{ color: C.soil }}>Difficultés :</strong> {detail.structure.challenges}</div>}
+              {detail.structure.outlook && <div><strong style={{ color: C.soil }}>Perspectives :</strong> {detail.structure.outlook}</div>}
+            </div>
+          )}
+
+          {detail.proofs && detail.proofs.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {detail.proofs.map((p) => {
+                const Ic = p.type === "PHOTO" ? Image : p.type === "VIDEO" ? Video : FileIcon;
+                return (
+                  <a key={p.id} href={p.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 600, color: C.leafDk, background: C.leaf + "1A", padding: "4px 9px", borderRadius: 999, textDecoration: "none" }}>
+                    <Ic size={12} /> {p.label || p.type}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       <H>Historique de production</H>
       <div style={{ marginTop: 10, maxHeight: 260, overflow: "auto" }}>
@@ -170,10 +223,10 @@ export default function PartenairesPage() {
   return (
     <Page title="Espace partenaires" subtitle="Données agrégées des producteurs, scores et opportunités de financement.">
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }} className="grid4">
-        <Stat icon={Sprout} label="Producteurs suivis" value={summary.total} sub="réseau Guinée" accent={C.leaf} />
-        <Stat icon={Gauge} label="Score moyen" value={summary.avgScore} sub="/ 100" accent={C.ochre} />
-        <Stat icon={ShieldCheck} label="Éligibles au crédit" value={summary.eligible} sub={`sur ${summary.total}`} accent={C.leafDk} />
-        <Stat icon={Handshake} label="Prêts au financement" value={summary.financingReady} sub="score ≥ 84" accent={C.ochreDk} />
+        <Stat icon={Sprout} label="Producteurs suivis" value={summary.total} sub="réseau Guinée" accent={C.leaf} help="Nombre total de comptes producteurs inscrits sur la plateforme." />
+        <Stat icon={Gauge} label="Score moyen" value={summary.avgScore} sub="/ 100" accent={C.ochre} help="Moyenne des scores (sur 100) de l'ensemble des producteurs suivis, tous volets confondus." />
+        <Stat icon={ShieldCheck} label="Éligibles au crédit" value={summary.eligible} sub={`sur ${summary.total}`} accent={C.leafDk} help="Producteurs dont le score est ≥ 70, considérés comme présentant un profil suffisamment solide pour un financement." />
+        <Stat icon={Handshake} label="Prêts au financement" value={summary.financingReady} sub="score ≥ 84" accent={C.ochreDk} help="Producteurs au profil le plus solide (score ≥ 84), prêts à recevoir une offre de financement." />
       </div>
 
       <div className="dash-2col" style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 18, marginTop: 18 }}>

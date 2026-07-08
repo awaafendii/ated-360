@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Egg, Sprout, Building2, ChevronRight, Lock, Bell, Award } from "lucide-react";
+import { Egg, Sprout, Building2, ChevronRight, Lock, Bell, Award, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext.js";
 import { C, card, lblS, inpS, ZONES, ZONE_LABELS } from "../styles/theme.js";
 
@@ -7,9 +7,10 @@ export default function AuthPage() {
   const { login, register } = useAuth();
   const [mode, setMode] = useState("login");
   const [role, setRole] = useState("PRODUCTEUR");
-  const [form, setForm] = useState({ fullName: "", email: "", password: "", zone: "CONAKRY", farmType: "MIXTE" });
+  const [form, setForm] = useState({ fullName: "", email: "", phone: "", dateOfBirth: "", fieldLocation: "", password: "", confirmPassword: "", zone: "CONAKRY", farmType: "MIXTE" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -19,8 +20,17 @@ export default function AuthPage() {
       if (mode === "login") {
         await login(form.email, form.password);
       } else {
-        const payload = { fullName: form.fullName, email: form.email, password: form.password, role, zone: form.zone };
-        if (role === "PRODUCTEUR") { payload.farmType = form.farmType; }
+        if (form.password !== form.confirmPassword) {
+          setError("Les deux mots de passe ne correspondent pas.");
+          setBusy(false);
+          return;
+        }
+        const payload = { fullName: form.fullName, email: form.email, phone: form.phone, password: form.password, role, zone: form.zone };
+        if (role === "PRODUCTEUR") {
+          payload.farmType = form.farmType;
+          payload.dateOfBirth = form.dateOfBirth;
+          payload.fieldLocation = form.fieldLocation;
+        }
         await register(payload);
       }
     } catch (err) {
@@ -92,6 +102,10 @@ export default function AuthPage() {
                     <option value="AGRICOLE">Agricole</option>
                     <option value="MIXTE">Mixte</option>
                   </select>
+                  <label style={lblS}>Date de naissance</label>
+                  <input type="date" value={form.dateOfBirth} onChange={set("dateOfBirth")} style={inpS} />
+                  <label style={lblS}>Localisation du champ</label>
+                  <input value={form.fieldLocation} onChange={set("fieldLocation")} placeholder="Ex. Parcelle nord, Village de Kobaya" style={inpS} />
                 </>
               )}
             </>
@@ -99,22 +113,35 @@ export default function AuthPage() {
 
           <label style={lblS}>E‑mail</label>
           <input value={form.email} onChange={set("email")} placeholder="exemple@ferme.gn" style={inpS} />
+          {mode === "signup" && (
+            <>
+              <label style={lblS}>Téléphone</label>
+              <input value={form.phone} onChange={set("phone")} placeholder="+224 6XX XX XX XX" style={inpS} />
+            </>
+          )}
           <label style={lblS}>Mot de passe</label>
           <div style={{ position: "relative" }}>
-            <input type="password" value={form.password} onChange={set("password")} placeholder="••••••••" style={inpS}
-              onKeyDown={(e) => e.key === "Enter" && submit()} />
-            <Lock size={15} color="#9CC4AC" style={{ position: "absolute", right: 14, top: 13 }} />
+            <input type={showPwd ? "text" : "password"} value={form.password} onChange={set("password")} placeholder="••••••••" style={{ ...inpS, paddingRight: 38 }}
+              onKeyDown={(e) => e.key === "Enter" && mode === "login" && submit()} />
+            <button type="button" onClick={() => setShowPwd((v) => !v)} aria-label={showPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"} style={{ position: "absolute", right: 10, top: 9, background: "none", border: "none", cursor: "pointer", padding: 4, display: "grid", placeItems: "center" }}>
+              {showPwd ? <EyeOff size={16} color="#6E9180" /> : <Eye size={16} color="#6E9180" />}
+            </button>
           </div>
+
+          {mode === "signup" && (
+            <>
+              <label style={lblS}>Confirmer le mot de passe</label>
+              <div style={{ position: "relative" }}>
+                <input type={showPwd ? "text" : "password"} value={form.confirmPassword} onChange={set("confirmPassword")} placeholder="••••••••" style={{ ...inpS, paddingRight: 38 }}
+                  onKeyDown={(e) => e.key === "Enter" && submit()} />
+                <Lock size={15} color="#9CC4AC" style={{ position: "absolute", right: 14, top: 13 }} />
+              </div>
+            </>
+          )}
 
           <button onClick={submit} disabled={busy} style={{ width: "100%", marginTop: 20, padding: "13px 0", border: "none", borderRadius: 12, background: busy ? "#9CC4AC" : C.ochre, color: "#fff", fontWeight: 700, fontSize: 14.5, cursor: busy ? "default" : "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
             {busy ? "Veuillez patienter…" : mode === "login" ? "Se connecter" : "Créer mon compte"} {!busy && <ChevronRight size={17} />}
           </button>
-
-          {mode === "login" && (
-            <p style={{ fontSize: 11.5, color: "#6E9180", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
-              Démo — Producteur : mariama@ferme.gn · Partenaire : partenaire@credit.gn<br />Mot de passe : Password123
-            </p>
-          )}
         </div>
       </div>
       <style>{`@media (max-width: 760px){ .auth-grid{ grid-template-columns:1fr !important; } }`}</style>

@@ -36,10 +36,14 @@ export function createApp() {
       origin(origin, cb) {
         // Pas d'origin (curl, mobile) : autorisé.
         if (!origin) return cb(null, true);
+        // Le proxy de dev de Create React App (client/package.json "proxy") réécrit
+        // l'en-tête Origin vers l'URL cible avec un slash final (ex: "http://localhost:4000/") :
+        // on l'ignore pour comparer les origines localhost entre elles.
+        const normalized = origin.replace(/\/+$/, "");
         // localhost (développement) : autorisé.
-        if (/^http:\/\/localhost:\d+$/.test(origin)) return cb(null, true);
+        if (/^http:\/\/localhost:\d+$/.test(normalized)) return cb(null, true);
         // Origines déclarées dans CORS_ORIGIN (production) : autorisées.
-        if (corsOrigins.includes(origin)) return cb(null, true);
+        if (corsOrigins.includes(normalized)) return cb(null, true);
         cb(new Error("Origine non autorisée par CORS"));
       },
       credentials: true,

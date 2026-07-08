@@ -34,6 +34,27 @@ export const producerApi = {
     const { data } = await http.patch("/producers/profile", payload);
     return data;
   },
+  async uploadCv(file) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const { data } = await http.upload("/producers/cv", fd);
+    return data;
+  },
+  async listProofs() {
+    const { data } = await http.get("/producers/proofs");
+    return data;
+  },
+  async addProof(file, type, label) {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("type", type);
+    if (label) fd.append("label", label);
+    const { data } = await http.upload("/producers/proofs", fd);
+    return data;
+  },
+  async removeProof(id) {
+    return http.del(`/producers/proofs/${id}`);
+  },
 };
 
 // ---------- Registre ----------

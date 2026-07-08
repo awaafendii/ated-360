@@ -1,26 +1,27 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Plane, Camera, FileText, Clock, Ruler, MapPin, CheckCircle2, X, Download, Layers, Activity } from "lucide-react";
+import { Plane, Camera, FileText, Clock, Ruler, MapPin, CheckCircle2, X, Download, Layers, Activity, Info } from "lucide-react";
 import { dronesApi } from "../api/index.js";
 import { C, card, lblS, inpS, fmtDate, ZONES, ZONE_LABELS, DRONE_STATUS_LABELS } from "../styles/theme.js";
 import { Page, Row, H, Tag, Spinner, ErrorBanner } from "../components/ui.js";
+import { CULTURES_WITH_AUTRE, AUTRE_CULTURE } from "../data/cultures.js";
 
 const PACKS = [
   { id: "SURVOL", nom: "Survol simple", desc: "Cartographie RGB + aperçu visuel.", duree: "≈ 30 min", prix: "150 000 GNF" },
   { id: "SANTE", nom: "Diagnostic santé (NDVI)", desc: "Indice de végétation, zones de stress, rapport.", duree: "≈ 1 h", prix: "320 000 GNF", reco: true },
   { id: "COMPLET", nom: "Audit complet", desc: "NDVI + thermique + comptage de pieds.", duree: "≈ 2 h", prix: "600 000 GNF" },
 ];
-const CULTURES = ["Riz", "Manioc", "Maïs", "Fonio", "Arachide", "Igname", "Café", "Ananas"];
 const healthColor = (v) => (v >= 75 ? C.leaf : v >= 62 ? C.ochre : C.terra);
 
 export default function DronesPage() {
   const [pack, setPack] = useState("SANTE");
-  const [form, setForm] = useState({ parcelle: "", culture: "Riz", hectares: "", zone: "CONAKRY", scheduledFor: "" });
+  const [form, setForm] = useState({ parcelle: "", culture: "Riz", cultureAutre: "", hectares: "", zone: "CONAKRY", scheduledFor: "" });
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [open, setOpen] = useState(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -34,8 +35,9 @@ export default function DronesPage() {
     if (!form.parcelle.trim()) return;
     setBusy(true); setError("");
     try {
+      const cultureFinale = form.culture === AUTRE_CULTURE ? (form.cultureAutre || AUTRE_CULTURE) : form.culture;
       await dronesApi.createMission({
-        pack, parcelle: form.parcelle, culture: form.culture,
+        pack, parcelle: form.parcelle, culture: cultureFinale,
         hectares: form.hectares || undefined, zone: form.zone,
         scheduledFor: form.scheduledFor || undefined,
       });
@@ -55,6 +57,34 @@ export default function DronesPage() {
   return (
     <Page title="Drones & état des champs" subtitle="Réservez un survol, suivez l'état de vos parcelles et générez des rapports.">
       <ErrorBanner message={error} />
+
+      <button onClick={() => setShowInfo((v) => !v)} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", cursor: "pointer", color: C.leafDk, fontSize: 12.5, fontWeight: 700, padding: 0, marginBottom: showInfo ? 10 : 16 }}>
+        <Info size={14} /> {showInfo ? "Masquer" : "Comment fonctionne le service drone ?"}
+      </button>
+      {showInfo && (
+        <div style={{ ...card, padding: "16px 18px", marginBottom: 16, background: "#FAFDFB" }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: C.soil, marginBottom: 10 }}>Déroulé d'une demande de survol</div>
+          <div className="grid4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 14 }}>
+            {[
+              ["1. Demande", "Vous choisissez une formule et envoyez la demande de survol pour une parcelle."],
+              ["2. Réception", "L'équipe ATED‑360 reçoit la demande et planifie un créneau avec un pilote."],
+              ["3. Survol", "Le drone survole la parcelle à la date convenue et capture les images."],
+              ["4. Rapport", "Les images sont traitées et le rapport (carte, indices, recommandations) est mis à votre disposition ici."],
+            ].map(([t, d]) => (
+              <div key={t} style={{ padding: 12, borderRadius: 11, border: `1px solid ${C.line}`, background: "#fff" }}>
+                <div style={{ fontWeight: 700, fontSize: 12, color: C.leafDk, marginBottom: 4 }}>{t}</div>
+                <div style={{ fontSize: 11.5, color: "#3A6B4D", lineHeight: 1.4 }}>{d}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: "#3A6B4D", lineHeight: 1.6 }}>
+            <strong style={{ color: C.soil }}>Prérequis :</strong> parcelle accessible et dégagée, dimensions et localisation renseignées, coordonnées à jour pour être contacté par le pilote.<br />
+            <strong style={{ color: C.soil }}>Délais :</strong> confirmation du créneau sous 48 h ouvrées, rapport disponible peu après le survol selon la formule choisie.<br />
+            <strong style={{ color: C.soil }}>Données produites :</strong> carte NDVI (santé de la végétation), indice de santé /100, niveau de stress hydrique, constat agronomique et recommandation, exportables en PDF.
+          </div>
+        </div>
+      )}
+
       {confirm && (
         <div style={{ ...card, padding: "13px 16px", marginBottom: 16, background: C.millet, border: `1px solid ${C.leaf}`, display: "flex", gap: 10, alignItems: "center" }}>
           <CheckCircle2 size={19} color={C.leafDk} /><span style={{ fontSize: 13.5, color: C.soil, fontWeight: 600 }}>Demande de survol envoyée — un pilote vous contactera pour confirmer.</span>
@@ -84,9 +114,13 @@ export default function DronesPage() {
           <label style={lblS}>Nom de la parcelle</label>
           <input value={form.parcelle} onChange={(e) => setForm({ ...form, parcelle: e.target.value })} placeholder="Ex. Bas-fond riz nord" style={inpS} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div><label style={lblS}>Culture</label><select value={form.culture} onChange={(e) => setForm({ ...form, culture: e.target.value })} style={inpS}>{CULTURES.map((x) => <option key={x}>{x}</option>)}</select></div>
+            <div><label style={lblS}>Culture</label><select value={form.culture} onChange={(e) => setForm({ ...form, culture: e.target.value })} style={inpS}>{CULTURES_WITH_AUTRE.map((x) => <option key={x}>{x}</option>)}</select></div>
             <div><label style={lblS}><Ruler size={11} /> Surface (ha)</label><input value={form.hectares} onChange={(e) => setForm({ ...form, hectares: e.target.value })} placeholder="2.5" style={inpS} /></div>
           </div>
+          {form.culture === AUTRE_CULTURE && (
+            <div><label style={lblS}>Précisez la culture</label>
+              <input value={form.cultureAutre} onChange={(e) => setForm({ ...form, cultureAutre: e.target.value })} placeholder="Ex. Baobab, Néré…" style={inpS} /></div>
+          )}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div><label style={lblS}><MapPin size={11} /> Zone</label><select value={form.zone} onChange={(e) => setForm({ ...form, zone: e.target.value })} style={inpS}>{ZONES.map((z) => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}</select></div>
             <div><label style={lblS}>Date souhaitée</label><input type="date" value={form.scheduledFor} onChange={(e) => setForm({ ...form, scheduledFor: e.target.value })} style={inpS} /></div>

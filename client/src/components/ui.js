@@ -1,4 +1,5 @@
 import React from "react";
+import { HelpCircle } from "lucide-react";
 import { C, card, barColor } from "../styles/theme.js";
 import { ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
 
@@ -17,24 +18,27 @@ export const H = ({ children }) => (
 export function Page({ title, subtitle, children }) {
   return (
     <div>
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 27, fontWeight: 600, color: C.soil, margin: 0 }}>{title}</h2>
-        {subtitle && <p style={{ fontSize: 13.5, color: "#6E9180", margin: "5px 0 0" }}>{subtitle}</p>}
+      <div style={{ marginBottom: 16 }}>
+        <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 23, fontWeight: 600, color: C.soil, margin: 0 }}>{title}</h2>
+        {subtitle && <p style={{ fontSize: 13, color: "#6E9180", margin: "4px 0 0" }}>{subtitle}</p>}
       </div>
       {children}
     </div>
   );
 }
 
-export function Stat({ icon: Icon, label, value, sub, accent }) {
+export function Stat({ icon: Icon, label, value, sub, accent, help }) {
   return (
-    <div style={{ ...card, padding: 18, display: "flex", flexDirection: "column", gap: 10 }}>
+    <div style={{ ...card, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 12.5, color: "#6E9180", fontWeight: 600 }}>{label}</span>
-        <span style={{ width: 34, height: 34, borderRadius: 10, background: accent + "1A", display: "grid", placeItems: "center" }}><Icon size={17} color={accent} /></span>
+        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#6E9180", fontWeight: 600 }}>
+          {label}
+          {help && <HelpCircle size={13} color="#9CC4AC" style={{ cursor: "help" }} title={help} />}
+        </span>
+        <span style={{ width: 30, height: 30, borderRadius: 9, background: accent + "1A", display: "grid", placeItems: "center", flexShrink: 0 }}><Icon size={15} color={accent} /></span>
       </div>
-      <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 30, fontWeight: 600, color: C.soil, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: "#6E9180" }}>{sub}</div>}
+      <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 25, fontWeight: 600, color: C.soil, lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11.5, color: "#6E9180" }}>{sub}</div>}
     </div>
   );
 }
