@@ -48,6 +48,19 @@ export default function AppShell() {
     </>
   );
 
+  // Bloc identité + déconnexion, partagé entre la sidebar desktop et le tiroir mobile
+  // (l'un des deux est toujours masqué selon la largeur d'écran, mais la déconnexion
+  // doit rester accessible dans les deux cas).
+  const UserFooter = () => (
+    <div style={{ borderTop: "1px solid rgba(255,255,255,.12)", paddingTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 12px" }}>
+        <span style={{ width: 36, height: 36, borderRadius: "50%", background: C.leaf, display: "grid", placeItems: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>{user.fullName.charAt(0)}</span>
+        <div style={{ minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.fullName}</div><div style={{ fontSize: 11, color: "#9CC4AC", textTransform: "capitalize" }}>{user.role.toLowerCase()}</div></div>
+      </div>
+      <button onClick={logout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 13px", borderRadius: 10, border: "none", background: "rgba(255,255,255,.06)", color: "#9CC4AC", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}><LogOut size={16} /> Se déconnecter</button>
+    </div>
+  );
+
   return (
     <div style={{ minHeight: "100vh", background: "#F4FAF6", display: "flex", fontFamily: "'Inter', system-ui, sans-serif", color: C.soil }}>
       <aside className="ated-side" style={{ width: 248, background: C.soil, color: "#fff", padding: "22px 16px", display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh" }}>
@@ -56,13 +69,7 @@ export default function AppShell() {
           <span style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600 }}>ATED‑360</span>
         </div>
         <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}><NavLinks /></nav>
-        <div style={{ borderTop: "1px solid rgba(255,255,255,.12)", paddingTop: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 6px 12px" }}>
-            <span style={{ width: 36, height: 36, borderRadius: "50%", background: C.leaf, display: "grid", placeItems: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>{user.fullName.charAt(0)}</span>
-            <div style={{ minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.fullName}</div><div style={{ fontSize: 11, color: "#9CC4AC", textTransform: "capitalize" }}>{user.role.toLowerCase()}</div></div>
-          </div>
-          <button onClick={logout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 13px", borderRadius: 10, border: "none", background: "rgba(255,255,255,.06)", color: "#9CC4AC", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}><LogOut size={16} /> Se déconnecter</button>
-        </div>
+        <UserFooter />
       </aside>
 
       {mobileNav && <div onClick={() => setMobileNav(false)} style={{ position: "fixed", inset: 0, background: "rgba(20,54,31,.5)", zIndex: 40 }} />}
@@ -71,7 +78,8 @@ export default function AppShell() {
           <span style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600 }}>ATED‑360</span>
           <button onClick={() => setMobileNav(false)} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer" }}><X size={20} /></button>
         </div>
-        <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}><NavLinks onPick={() => setMobileNav(false)} /></nav>
+        <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}><NavLinks onPick={() => setMobileNav(false)} /></nav>
+        <UserFooter />
       </aside>
 
       <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>

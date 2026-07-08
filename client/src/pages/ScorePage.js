@@ -1,11 +1,16 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Bird, Sprout, Activity } from "lucide-react";
 import { scoreApi } from "../api/index.js";
+import { useAuth } from "../context/AuthContext.js";
 import { C, card, barColor } from "../styles/theme.js";
 import { Page, H, Tag, ScoreRing, Spinner, ErrorBanner } from "../components/ui.js";
 
 export default function ScorePage() {
-  const [view, setView] = useState("AVICOLE");
+  const { user } = useAuth();
+  const farmType = user?.producer?.farmType || "MIXTE";
+  const isMixte = farmType === "MIXTE";
+
+  const [view, setView] = useState(farmType === "AGRICOLE" ? "AGRICOLE" : "AVICOLE");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -21,12 +26,14 @@ export default function ScorePage() {
   return (
     <Page title="Score Producteur ATED‑360" subtitle="Évaluation construite sur vos données opérationnelles et financières.">
       <ErrorBanner message={error} />
-      <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-        {[["AVICOLE", Bird, "Volet avicole"], ["AGRICOLE", Sprout, "Volet agricole"]].map(([v, Ic, lbl]) => {
-          const on = view === v;
-          return <button key={v} onClick={() => setView(v)} style={{ display: "flex", gap: 8, alignItems: "center", padding: "9px 16px", borderRadius: 999, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13.5, background: on ? C.soil : "#fff", color: on ? "#fff" : "#3A6B4D", boxShadow: on ? "none" : `inset 0 0 0 1.5px ${C.line}` }}><Ic size={15} /> {lbl}</button>;
-        })}
-      </div>
+      {isMixte && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+          {[["AVICOLE", Bird, "Volet avicole"], ["AGRICOLE", Sprout, "Volet agricole"]].map(([v, Ic, lbl]) => {
+            const on = view === v;
+            return <button key={v} onClick={() => setView(v)} style={{ display: "flex", gap: 8, alignItems: "center", padding: "9px 16px", borderRadius: 999, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13.5, background: on ? C.soil : "#fff", color: on ? "#fff" : "#3A6B4D", boxShadow: on ? "none" : `inset 0 0 0 1.5px ${C.line}` }}><Ic size={15} /> {lbl}</button>;
+          })}
+        </div>
+      )}
 
       {loading || !result ? <Spinner /> : (
         <div className="dash-2col" style={{ display: "grid", gridTemplateColumns: ".8fr 1.2fr", gap: 18 }}>

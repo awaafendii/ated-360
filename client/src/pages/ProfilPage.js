@@ -17,6 +17,10 @@ export default function ProfilPage() {
   const producer = user?.producer;
 
   const [farmType, setFarmType] = useState(producer?.farmType || "MIXTE");
+  // N'affiche que les champs pertinents pour le volet choisi (évite de mélanger
+  // les informations avicoles et agricoles), les deux volets si le profil est mixte.
+  const showPoultry = farmType !== "AGRICOLE";
+  const showHectares = farmType !== "AVICOLE";
   const [fieldLocation, setFieldLocation] = useState(producer?.fieldLocation || "");
   const [poultryCount, setPoultryCount] = useState(producer?.poultryCount ?? 0);
   const [hectares, setHectares] = useState(producer?.hectares ?? 0);
@@ -187,43 +191,53 @@ export default function ProfilPage() {
             <label style={lblS}><MapPin size={12} style={{ verticalAlign: "-2px" }} /> Localisation du champ</label>
             <input value={fieldLocation} onChange={(e) => setFieldLocation(e.target.value)} placeholder="Ex. Parcelle nord, village de Kobaya" style={inpS} />
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div><label style={lblS}>Effectif (volailles/cheptel)</label>
-                <input type="number" min="0" value={poultryCount} onChange={(e) => setPoultryCount(e.target.value)} style={inpS} /></div>
-              <div><label style={lblS}>Surface (ha)</label>
-                <input type="number" min="0" step="0.1" value={hectares} onChange={(e) => setHectares(e.target.value)} style={inpS} /></div>
-            </div>
-
-            <label style={lblS}>Cultures pratiquées</label>
-            <p style={{ fontSize: 11.5, color: "#6E9180", margin: "0 0 8px" }}>Cochez toutes les cultures que vous pratiquez — le suivi et les partenaires afficheront l'ensemble de vos cultures déclarées.</p>
-
-            {cultures.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                {cultures.map((c) => (
-                  <span key={c} style={{ display: "flex", alignItems: "center", gap: 5, background: C.leaf + "1A", color: C.leafDk, fontSize: 12, fontWeight: 600, padding: "4px 6px 4px 10px", borderRadius: 999 }}>
-                    {c}
-                    <button onClick={() => toggleCulture(c)} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "grid", placeItems: "center", color: C.leafDk }}><X size={12} /></button>
-                  </span>
-                ))}
+            {(showPoultry || showHectares) && (
+              <div style={{ display: "grid", gridTemplateColumns: showPoultry && showHectares ? "1fr 1fr" : "1fr", gap: 10 }}>
+                {showPoultry && (
+                  <div><label style={lblS}>Effectif (volailles/cheptel)</label>
+                    <input type="number" min="0" value={poultryCount} onChange={(e) => setPoultryCount(e.target.value)} style={inpS} /></div>
+                )}
+                {showHectares && (
+                  <div><label style={lblS}>Surface (ha)</label>
+                    <input type="number" min="0" step="0.1" value={hectares} onChange={(e) => setHectares(e.target.value)} style={inpS} /></div>
+                )}
               </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, maxHeight: 220, overflowY: "auto", padding: 10, border: `1px solid ${C.line}`, borderRadius: 11, background: "#FAFDFB", marginBottom: 10 }}>
-              {CULTURES.map((c) => {
-                const on = cultures.includes(c);
-                return (
-                  <label key={c} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: on ? C.leafDk : "#3A6B4D", fontWeight: on ? 700 : 500, cursor: "pointer" }}>
-                    <input type="checkbox" checked={on} onChange={() => toggleCulture(c)} />
-                    {c}
-                  </label>
-                );
-              })}
-            </div>
+            {showHectares && (
+              <>
+                <label style={lblS}>Cultures pratiquées</label>
+                <p style={{ fontSize: 11.5, color: "#6E9180", margin: "0 0 8px" }}>Cochez toutes les cultures que vous pratiquez — le suivi et les partenaires afficheront l'ensemble de vos cultures déclarées.</p>
 
-            <div style={{ display: "flex", gap: 8 }}>
-              <input value={autreCulture} onChange={(e) => setAutreCulture(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addAutreCulture()} placeholder="Autre culture (ex. Baobab, Néré…)" style={{ ...inpS, marginBottom: 0, flex: 1 }} />
-              <button onClick={addAutreCulture} style={{ padding: "0 16px", border: "none", borderRadius: 11, background: C.millet, color: C.leafDk, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}><Plus size={15} /> Ajouter</button>
-            </div>
+                {cultures.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                    {cultures.map((c) => (
+                      <span key={c} style={{ display: "flex", alignItems: "center", gap: 5, background: C.leaf + "1A", color: C.leafDk, fontSize: 12, fontWeight: 600, padding: "4px 6px 4px 10px", borderRadius: 999 }}>
+                        {c}
+                        <button onClick={() => toggleCulture(c)} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "grid", placeItems: "center", color: C.leafDk }}><X size={12} /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, maxHeight: 220, overflowY: "auto", padding: 10, border: `1px solid ${C.line}`, borderRadius: 11, background: "#FAFDFB", marginBottom: 10 }}>
+                  {CULTURES.map((c) => {
+                    const on = cultures.includes(c);
+                    return (
+                      <label key={c} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: on ? C.leafDk : "#3A6B4D", fontWeight: on ? 700 : 500, cursor: "pointer" }}>
+                        <input type="checkbox" checked={on} onChange={() => toggleCulture(c)} />
+                        {c}
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input value={autreCulture} onChange={(e) => setAutreCulture(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addAutreCulture()} placeholder="Autre culture (ex. Baobab, Néré…)" style={{ ...inpS, marginBottom: 0, flex: 1 }} />
+                  <button onClick={addAutreCulture} style={{ padding: "0 16px", border: "none", borderRadius: 11, background: C.millet, color: C.leafDk, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}><Plus size={15} /> Ajouter</button>
+                </div>
+              </>
+            )}
           </div>
 
           <div style={{ ...card, padding: 20 }}>
